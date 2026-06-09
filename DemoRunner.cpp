@@ -3,6 +3,8 @@
 #include <fstream>
 #include <iostream>
 
+#include "Timer.hpp"
+
 namespace plotter
 {
 
@@ -240,9 +242,15 @@ void DemoRunner::CompareFillAlgorithms()
     plotter1.Render(ss);
 
     // Измерьте время выполнения заливки двумя методами
+    Timer timer(true);
     plotter1.FloodFill(10, 10, 'F');
+    timer.Stop();
+    auto floodfill_time = timer.GetDuration();
 
+    timer.Restart();
     plotter2.ScanlineFill(10, 10, 'S');
+    timer.Stop();
+    auto scanline_time = timer.GetDuration();
 
     ss << "FloodFill time: " << floodfill_time << " microseconds\n";
     ss << "ScanlineFill time: " << scanline_time << " microseconds\n";

@@ -5,6 +5,17 @@
 
 namespace plotter
 {
+GrayscalePlotter::GrayscalePlotter(
+    std::unique_ptr<Canvas> canvas, const std::vector<char>& palette
+) : Plotter(std::move(canvas)), palette_(palette)
+{
+}
+
+GrayscalePlotter::GrayscalePlotter(
+    int width, int height, char background_char, const std::vector<char>& palette
+) : Plotter(std::make_unique<Canvas>(width, height, background_char)), palette_(palette)
+{
+}
 
 std::vector<char> GrayscalePlotter::DefaultPalette()
 {
@@ -232,6 +243,17 @@ void GrayscalePlotter::InvertBrightness()
             }
         }
     }
+}
+
+char GrayscalePlotter::BrightnessToChar(double brightness) const {
+    if (std::isnan(brightness) || brightness < 0) {
+        return palette_.front();
+    }
+    if (brightness > 1) {
+        return palette_.back();
+    }
+    size_t idx = std::floor(brightness * (palette_.size() - 1));
+    return palette_[idx];
 }
 
 double GrayscalePlotter::GetPixelBrightness(const int x, const int y) const

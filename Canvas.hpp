@@ -19,6 +19,7 @@ public:
     Canvas(Canvas&& other) noexcept;
     Canvas& operator=(const Canvas& other);
     Canvas& operator=(Canvas&& other) noexcept;
+    void swap(Canvas& canvas) noexcept;
 
     [[nodiscard]] int Width() const noexcept;
     [[nodiscard]] int Height() const noexcept;
@@ -50,7 +51,7 @@ private:
     int height_;
     char background_;
     // Добавьте контейнер для хранения данных
-
+    std::vector<char> canvas_;
 };
 
 } // namespace plotter
