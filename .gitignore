@@ -2,3 +2,4 @@
 cmake-build-debug
 build
 Demo/*.txt
+Plotter

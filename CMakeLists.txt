@@ -23,3 +23,7 @@ set(SOURCES
 )
 
 add_executable(Plotter ${SOURCES})
+
+set_target_properties(Plotter PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
