@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.25)
 project(Plotter)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -18,6 +18,8 @@ set(SOURCES
         json.cpp
         json.h
         main.cpp
+        Timer.cpp
+        Timer.hpp
 )
 
 add_executable(Plotter ${SOURCES})
