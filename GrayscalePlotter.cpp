@@ -160,48 +160,36 @@ std::vector<std::vector<double>> GrayscalePlotter::GetBrightnessMatrix() const
 
 void GrayscalePlotter::AdjustBrightness(const double factor)
 {
-    for (int y = 0; y < GetCanvas().Height(); ++y)
+    for (char& pixel_char : GetCanvas())
     {
-        for (int x = 0; x < GetCanvas().Width(); ++x)
+        if (auto it = char_to_brightness_.find(pixel_char); it != char_to_brightness_.end())
         {
-            char old_char = GetCanvas().at(x, y);
-            if (auto it = char_to_brightness_.find(old_char); it != char_to_brightness_.end())
-            {
-                const double new_brightness = std::clamp(it->second * factor, 0.0, 1.0);
-                GetCanvas().at(x, y) = BrightnessToChar(new_brightness);
-            }
+            const double new_brightness = std::clamp(it->second * factor, 0.0, 1.0);
+            pixel_char = BrightnessToChar(new_brightness);
         }
     }
 }
 
 void GrayscalePlotter::ApplyThreshold(const double threshold)
 {
-    for (int y = 0; y < GetCanvas().Height(); ++y)
+    for (char& pixel_char : GetCanvas())
     {
-        for (int x = 0; x < GetCanvas().Width(); ++x)
+        if (const auto it = char_to_brightness_.find(pixel_char); it != char_to_brightness_.end())
         {
-            char old_char = GetCanvas().at(x, y);
-            if (const auto it = char_to_brightness_.find(old_char); it != char_to_brightness_.end())
-            {
-                const double new_brightness = it->second >= threshold ? 1.0 : 0.0;
-                GetCanvas().at(x, y) = BrightnessToChar(new_brightness);
-            }
+            const double new_brightness = it->second >= threshold ? 1.0 : 0.0;
+            pixel_char = BrightnessToChar(new_brightness);
         }
     }
 }
 
 void GrayscalePlotter::InvertBrightness()
 {
-    for (int y = 0; y < GetCanvas().Height(); ++y)
+    for (char& pixel_char : GetCanvas())
     {
-        for (int x = 0; x < GetCanvas().Width(); ++x)
+        if (const auto it = char_to_brightness_.find(pixel_char); it != char_to_brightness_.end())
         {
-            char old_char = GetCanvas().at(x, y);
-            if (const auto it = char_to_brightness_.find(old_char); it != char_to_brightness_.end())
-            {
-                const double new_brightness = 1.0 - it->second;
-                GetCanvas().at(x, y) = BrightnessToChar(new_brightness);
-            }
+            const double new_brightness = 1.0 - it->second;
+            pixel_char = BrightnessToChar(new_brightness);
         }
     }
 }
