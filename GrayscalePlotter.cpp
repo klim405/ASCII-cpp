@@ -9,12 +9,14 @@ GrayscalePlotter::GrayscalePlotter(
     std::unique_ptr<Canvas> canvas, const std::vector<char>& palette
 ) : Plotter(std::move(canvas)), palette_(palette)
 {
+    RefreshCharToBrightness();
 }
 
 GrayscalePlotter::GrayscalePlotter(
     int width, int height, char background_char, const std::vector<char>& palette
 ) : Plotter(std::make_unique<Canvas>(width, height, background_char)), palette_(palette)
 {
+    RefreshCharToBrightness();
 }
 
 std::vector<char> GrayscalePlotter::DefaultPalette()
@@ -103,15 +105,9 @@ double GrayscalePlotter::CalculateAverageBrightness()
     double total = 0.0;
     int count = 0;
 
-    std::map<char, double> char_to_brightness;
-    for (size_t i = 0; i < palette_.size(); ++i)
-    {
-        const double brightness = static_cast<double>(i) / (palette_.size() - 1);
-        char_to_brightness[palette_[i]] = brightness;
-    }
     for (auto& pixel : GetCanvas())
     {
-        if (const auto it = char_to_brightness.find(pixel); it != char_to_brightness.end())
+        if (const auto it = char_to_brightness_.find(pixel); it != char_to_brightness_.end())
         {
             total += it->second;
             count++;
@@ -128,19 +124,12 @@ std::pair<double, double> GrayscalePlotter::GetMinMaxBrightness()
         return { 0.0, 0.0 };
     }
 
-    std::map<char, double> char_to_brightness;
-    for (size_t i = 0; i < palette_.size(); ++i)
-    {
-        const double brightness = static_cast<double>(i) / (palette_.size() - 1);
-        char_to_brightness[palette_[i]] = brightness;
-    }
-
     double min_brightness = 1.0;
     double max_brightness = 0.0;
 
     for (const auto& pixel : GetCanvas())
     {
-        if (const auto it = char_to_brightness.find(pixel); it != char_to_brightness.end())
+        if (const auto it = char_to_brightness_.find(pixel); it != char_to_brightness_.end())
         {
             double brightness = it->second;
             min_brightness = std::min(min_brightness, brightness);
@@ -156,20 +145,13 @@ std::vector<std::vector<double>> GrayscalePlotter::GetBrightnessMatrix() const
     std::vector<std::vector<double>> matrix(GetCanvas().Height(),
         std::vector<double>(GetCanvas().Width()));
 
-    std::map<char, double> char_to_brightness;
-    for (size_t i = 0; i < palette_.size(); ++i)
-    {
-        const double brightness = static_cast<double>(i) / (palette_.size() - 1);
-        char_to_brightness[palette_[i]] = brightness;
-    }
-
     for (int y = 0; y < GetCanvas().Height(); ++y)
     {
         for (int x = 0; x < GetCanvas().Width(); ++x)
         {
             char pixel_char = GetCanvas().at(x, y);
-            auto it = char_to_brightness.find(pixel_char);
-            matrix[y][x] = it != char_to_brightness.end() ? it->second : 0.0;
+            auto it = char_to_brightness_.find(pixel_char);
+            matrix[y][x] = it != char_to_brightness_.end() ? it->second : 0.0;
         }
     }
 
@@ -178,19 +160,12 @@ std::vector<std::vector<double>> GrayscalePlotter::GetBrightnessMatrix() const
 
 void GrayscalePlotter::AdjustBrightness(const double factor)
 {
-    std::map<char, double> char_to_brightness;
-    for (size_t i = 0; i < palette_.size(); ++i)
-    {
-        const double brightness = static_cast<double>(i) / (palette_.size() - 1);
-        char_to_brightness[palette_[i]] = brightness;
-    }
-
     for (int y = 0; y < GetCanvas().Height(); ++y)
     {
         for (int x = 0; x < GetCanvas().Width(); ++x)
         {
             char old_char = GetCanvas().at(x, y);
-            if (auto it = char_to_brightness.find(old_char); it != char_to_brightness.end())
+            if (auto it = char_to_brightness_.find(old_char); it != char_to_brightness_.end())
             {
                 const double new_brightness = std::clamp(it->second * factor, 0.0, 1.0);
                 GetCanvas().at(x, y) = BrightnessToChar(new_brightness);
@@ -201,19 +176,12 @@ void GrayscalePlotter::AdjustBrightness(const double factor)
 
 void GrayscalePlotter::ApplyThreshold(const double threshold)
 {
-    std::map<char, double> char_to_brightness;
-    for (size_t i = 0; i < palette_.size(); ++i)
-    {
-        const double brightness = static_cast<double>(i) / (palette_.size() - 1);
-        char_to_brightness[palette_[i]] = brightness;
-    }
-
     for (int y = 0; y < GetCanvas().Height(); ++y)
     {
         for (int x = 0; x < GetCanvas().Width(); ++x)
         {
             char old_char = GetCanvas().at(x, y);
-            if (const auto it = char_to_brightness.find(old_char); it != char_to_brightness.end())
+            if (const auto it = char_to_brightness_.find(old_char); it != char_to_brightness_.end())
             {
                 const double new_brightness = it->second >= threshold ? 1.0 : 0.0;
                 GetCanvas().at(x, y) = BrightnessToChar(new_brightness);
@@ -224,19 +192,12 @@ void GrayscalePlotter::ApplyThreshold(const double threshold)
 
 void GrayscalePlotter::InvertBrightness()
 {
-    std::map<char, double> char_to_brightness;
-    for (size_t i = 0; i < palette_.size(); ++i)
-    {
-        const double brightness = static_cast<double>(i) / (palette_.size() - 1);
-        char_to_brightness[palette_[i]] = brightness;
-    }
-
     for (int y = 0; y < GetCanvas().Height(); ++y)
     {
         for (int x = 0; x < GetCanvas().Width(); ++x)
         {
             char old_char = GetCanvas().at(x, y);
-            if (const auto it = char_to_brightness.find(old_char); it != char_to_brightness.end())
+            if (const auto it = char_to_brightness_.find(old_char); it != char_to_brightness_.end())
             {
                 const double new_brightness = 1.0 - it->second;
                 GetCanvas().at(x, y) = BrightnessToChar(new_brightness);
@@ -256,21 +217,23 @@ char GrayscalePlotter::BrightnessToChar(double brightness) const {
     return palette_[idx];
 }
 
+
+void GrayscalePlotter::RefreshCharToBrightness() {
+    char_to_brightness_.clear();
+    for (size_t i = 0; i < palette_.size(); ++i) {
+        const double brightness = static_cast<double>(i) / (palette_.size() - 1);
+        char_to_brightness_[palette_[i]] = brightness;
+    }
+}
+
 double GrayscalePlotter::GetPixelBrightness(const int x, const int y) const
 {
     if (!GetCanvas().InBounds(x, y))
         return 0.0;
 
-    std::map<char, double> char_to_brightness;
-    for (size_t i = 0; i < palette_.size(); ++i)
-    {
-        const double brightness = static_cast<double>(i) / (palette_.size() - 1);
-        char_to_brightness[palette_[i]] = brightness;
-    }
-
     const char pixel_char = GetCanvas().at(x, y);
-    const auto it = char_to_brightness.find(pixel_char);
-    return it != char_to_brightness.end() ? it->second : 0.0;
+    const auto it = char_to_brightness_.find(pixel_char);
+    return it != char_to_brightness_.end() ? it->second : 0.0;
 }
 
 void GrayscalePlotter::SetPixelBrightness(const int x, const int y, const double brightness)
@@ -435,6 +398,8 @@ void GrayscalePlotter::SetPalette(const std::vector<char>& new_palette)
     if (!new_palette.empty())
     {
         palette_ = new_palette;
+
+        RefreshCharToBrightness();
 
         const auto brightness_matrix = GetBrightnessMatrix();
         for (int y = 0; y < GetCanvas().Height(); ++y)

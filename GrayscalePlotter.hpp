@@ -48,8 +48,10 @@ public:
 
 private:
     std::vector<char> palette_;
+    std::map<char, double> char_to_brightness_;
 
     char BrightnessToChar(double brightness) const;
+    void RefreshCharToBrightness();
 
     double GetPixelBrightness(int x, int y) const;
     void SetPixelBrightness(int x, int y, double brightness);
