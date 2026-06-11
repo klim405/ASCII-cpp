@@ -41,6 +41,15 @@ private:
     void DrawCircleBresenham(int center_x, int center_y, int radius, char brush);
     void FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, char brush) const;
 
+    /**
+     * @brief Ищет координаты однотонного горизонтального отрезка.
+     *
+     * @param x Абсцисса точки лежащей на прямой.
+     * @param y Ордината точки лежащей на прямой.
+     * @return Абсцисса начала отрезка и абсцисса конца отрезка.
+     */
+    std::pair<int, int> FindMonochromeRow(int x, int y) const;
+
     struct ScanlineSegment
     {
         int y;

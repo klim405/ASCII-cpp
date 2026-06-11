@@ -292,6 +292,23 @@ void Plotter::FillTriangle(int x1, int y1, int x2, int y2, int x3, int y3, const
     }
 }
 
+std::pair<int, int> Plotter::FindMonochromeRow(int x, int y) const {
+    const char target_shade = canvas_->at(x, y);
+    int x1 = x, x2 = x;
+
+    while(x1 > 0 && canvas_->at(x1 - 1, y) == target_shade)
+    {
+        --x1;
+    }
+
+    while(x2 < canvas_->Width() - 1 && canvas_->at(x2 + 1, y) == target_shade)
+    {
+        ++x2;
+    }
+
+    return {x1, x2};
+}
+
 void Plotter::ScanlineFill(const int x, const int y, const char fill_brush)
 {
     if (!canvas_->InBounds(x, y))
@@ -306,91 +323,32 @@ void Plotter::ScanlineFill(const int x, const int y, const char fill_brush)
     }
 
     std::stack<ScanlineSegment> segments;
-    segments.emplace(y, x, x);
+    const auto [init_x1, init_x2] = FindMonochromeRow(x, y);
+    segments.emplace(y, init_x1, init_x2);
 
     while (!segments.empty())
     {
         const auto [y, x_start, x_end] = segments.top();
         segments.pop();
 
-        const int current_y = y;
-        int current_x = x_start;
-
-        while (current_x <= x_end)
+        if (canvas_->at(x_start, y) != target_brush)
         {
-            // Пропускаем уже закрашенные или неподходящие пиксели
-            if (canvas_->at(current_x, current_y) != target_brush)
-            {
-                current_x++;
-                continue;
-            }
+            continue;
+        }
 
-            // Находим начало нового отрезка
-            int new_x_start = current_x;
-            while (new_x_start > 0 && canvas_->at(new_x_start - 1, current_y) == target_brush)
-            {
-                new_x_start--;
-            }
+        canvas_->FillRegion(x_start, y, x_end, y, fill_brush);
 
-            // Находим конец отрезка
-            int new_x_end = current_x;
-            while (new_x_end < canvas_->Width() - 1 && canvas_->at(new_x_end + 1, current_y) == target_brush)
+        for (int neighbour_y[] = {y-1, y+1}; int current_y : neighbour_y)
+        {
+            for (int current_x = x_start; current_x <= x_end; ++current_x)
             {
-                new_x_end++;
-            }
-
-            // Закрашиваем отрезок
-            canvas_->FillRegion(new_x_start, current_y, new_x_end, current_y, fill_brush);
-
-            // Проверяем соседние строки на наличие новых сегментов
-            if (current_y > 0)
-            {
-                // Для строки выше проверяем, есть ли непрерывные отрезки
-                int above_y = current_y - 1;
-                int above_x = new_x_start;
-                while (above_x <= new_x_end)
+                if (canvas_->at(current_x, current_y) == target_brush)
                 {
-                    if (canvas_->at(above_x, above_y) == target_brush)
-                    {
-                        int above_start = above_x;
-                        while (above_x <= new_x_end && canvas_->at(above_x, above_y) == target_brush)
-                        {
-                            above_x++;
-                        }
-                        segments.emplace(above_y, above_start, above_x - 1);
-                    }
-                    else
-                    {
-                        above_x++;
-                    }
+                    auto [x1, x2] = FindMonochromeRow(current_x, current_y);
+                    segments.emplace(current_y, x1, x2);
+                    current_x = x2;
                 }
             }
-
-            if (current_y < canvas_->Height() - 1)
-            {
-                // Для строки ниже проверяем, есть ли непрерывные отрезки
-                int below_y = current_y + 1;
-                int below_x = new_x_start;
-                while (below_x <= new_x_end)
-                {
-                    if (canvas_->at(below_x, below_y) == target_brush)
-                    {
-                        int below_start = below_x;
-                        while (below_x <= new_x_end && canvas_->at(below_x, below_y) == target_brush)
-                        {
-                            below_x++;
-                        }
-                        segments.emplace(below_y, below_start, below_x - 1);
-                    }
-                    else
-                    {
-                        below_x++;
-                    }
-                }
-            }
-
-            // Переходим к следующему потенциальному отрезку
-            current_x = new_x_end + 1;
         }
     }
 }
