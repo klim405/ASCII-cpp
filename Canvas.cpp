@@ -118,6 +118,11 @@ namespace plotter {
         }
     }
 
+    void Canvas::FillPoint(int x, int y, char fill_char) {
+        if (InBounds(x, y)) {
+            canvas_[y*width_ + x] = fill_char;
+        }
+    }
 
     [[nodiscard]] bool Canvas::InBounds(int x, int y) const noexcept {
         return 0 <= x && x < width_ && 0 <= y && y < height_;

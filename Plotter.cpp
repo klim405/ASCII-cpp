@@ -69,10 +69,7 @@ void Plotter::DrawCircle(const int center_x, const int center_y, const int radiu
                 {
                     const int px = center_x + x;
                     const int py = center_y + y;
-                    if (canvas_->InBounds(px, py))
-                    {
-                        canvas_->at(px, py) = brush;
-                    }
+                    canvas_->FillPoint(px, py, brush);
                 }
             }
         }
@@ -202,10 +199,7 @@ void Plotter::PasteRegion(const Canvas& region, const int x, const int y)
         {
             const int dest_x = x + rx;
             const int dest_y = y + ry;
-            if (canvas_->InBounds(dest_x, dest_y))
-            {
-                (*canvas_)(dest_x, dest_y) = region.at(rx, ry);
-            }
+            canvas_->FillPoint(dest_x, dest_y, region.at(rx, ry));
         }
     }
 }
@@ -220,10 +214,7 @@ void Plotter::DrawLineBresenham(int x1, int y1, const int x2, const int y2, cons
 
     while (true)
     {
-        if (canvas_->InBounds(x1, y1))
-        {
-            (*canvas_)(x1, y1) = brush;
-        }
+        canvas_->FillPoint(x1, y1, brush);
 
         if (x1 == x2 && y1 == y2)
             break;
@@ -242,48 +233,28 @@ void Plotter::DrawLineBresenham(int x1, int y1, const int x2, const int y2, cons
     }
 }
 
-void Plotter::DrawCircleBresenham(const int center_x, const int center_y, const int radius, const char brush)
-{
-
-    auto draw_circle_points = [&](const int cx, const int cy, const int x, const int y)
-    {
-        if (canvas_->InBounds(cx + x, cy + y))
-            (*canvas_)(cx + x, cy + y) = brush;
-        if (canvas_->InBounds(cx - x, cy + y))
-            (*canvas_)(cx - x, cy + y) = brush;
-        if (canvas_->InBounds(cx + x, cy - y))
-            (*canvas_)(cx + x, cy - y) = brush;
-        if (canvas_->InBounds(cx - x, cy - y))
-            (*canvas_)(cx - x, cy - y) = brush;
-        if (canvas_->InBounds(cx + y, cy + x))
-            (*canvas_)(cx + y, cy + x) = brush;
-        if (canvas_->InBounds(cx - y, cy + x))
-            (*canvas_)(cx - y, cy + x) = brush;
-        if (canvas_->InBounds(cx + y, cy - x))
-            (*canvas_)(cx + y, cy - x) = brush;
-        if (canvas_->InBounds(cx - y, cy - x))
-            (*canvas_)(cx - y, cy - x) = brush;
-    };
-
+void Plotter::DrawCircleBresenham(const int center_x, const int center_y, const int radius, const char brush) {
     int x = 0;
     int y = radius;
-    int d = 3 - 2 * radius;
+    int delta = 3 - 2 * radius;
 
-    draw_circle_points(center_x, center_y, x, y);
+    while (y >= x) {
+        canvas_->FillPoint(center_x + x, center_y + y, brush);
+        canvas_->FillPoint(center_x - x, center_y + y, brush);
+        canvas_->FillPoint(center_x + x, center_y - y, brush);
+        canvas_->FillPoint(center_x - x, center_y - y, brush);
+        canvas_->FillPoint(center_x + y, center_y + x, brush);
+        canvas_->FillPoint(center_x - y, center_y + x, brush);
+        canvas_->FillPoint(center_x + y, center_y - x, brush);
+        canvas_->FillPoint(center_x - y, center_y - x, brush);
 
-    while (y >= x)
-    {
         x++;
-        if (d > 0)
-        {
+        if (delta > 0) {
             --y;
-            d = d + 4 * (x - y) + 10;
+            delta += 4 * (x - y) + 10;
+        } else {
+            delta += 4 * x + 6;
         }
-        else
-        {
-            d = d + 4 * x + 6;
-        }
-        draw_circle_points(center_x, center_y, x, y);
     }
 }
 
@@ -355,10 +326,7 @@ void Plotter::ScanlineFill(const int x, const int y, const char fill_brush)
     x_end--;
 
     // Закрашиваем начальный отрезок
-    for (int i = x_start; i <= x_end; i++)
-    {
-        canvas_->at(i, y) = fill_brush;
-    }
+    canvas_->FillRegion(x_start, y, x_end, y, fill_brush);
 
     // Добавляем сегменты сверху и снизу
     if (y > 0)
@@ -402,10 +370,7 @@ void Plotter::ScanlineFill(const int x, const int y, const char fill_brush)
             }
 
             // Закрашиваем отрезок
-            for (int i = new_x_start; i <= new_x_end; i++)
-            {
-                canvas_->at(i, current_y) = fill_brush;
-            }
+            canvas_->FillRegion(new_x_start, current_y, new_x_end, current_y, fill_brush);
 
             // Проверяем соседние строки на наличие новых сегментов
             if (current_y > 0)

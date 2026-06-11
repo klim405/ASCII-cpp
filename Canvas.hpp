@@ -32,6 +32,7 @@ public:
 
     void Clear(char fill_char);
     void FillRegion(int x1, int y1, int x2, int y2, char fill_char);
+    void FillPoint(int x, int y, char fill_char);
 
     [[nodiscard]] bool InBounds(int x, int y) const noexcept;
 
