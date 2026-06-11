@@ -306,37 +306,7 @@ void Plotter::ScanlineFill(const int x, const int y, const char fill_brush)
     }
 
     std::stack<ScanlineSegment> segments;
-
-    // Находим начальный горизонтальный отрезок
-    int x_start = x;
-    int x_end = x;
-
-    // Идем влево
-    while (x_start >= 0 && canvas_->at(x_start, y) == target_brush)
-    {
-        x_start--;
-    }
-    x_start++;
-
-    // Идем вправо
-    while (x_end < canvas_->Width() && canvas_->at(x_end, y) == target_brush)
-    {
-        x_end++;
-    }
-    x_end--;
-
-    // Закрашиваем начальный отрезок
-    canvas_->FillRegion(x_start, y, x_end, y, fill_brush);
-
-    // Добавляем сегменты сверху и снизу
-    if (y > 0)
-    {
-        segments.emplace(y - 1, x_start, x_end);
-    }
-    if (y < canvas_->Height() - 1)
-    {
-        segments.emplace(y + 1, x_start, x_end);
-    }
+    segments.emplace(y, x, x);
 
     while (!segments.empty())
     {
