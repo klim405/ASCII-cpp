@@ -86,11 +86,15 @@ void Plotter::DrawCircle(const int center_x, const int center_y, const int radiu
 void Plotter::FloodFill(int x, int y, const char fill_brush)
 {
     if (!canvas_->InBounds(x, y))
+    {
         return;
+    }
 
     const char target_brush = canvas_->at(x, y);
     if (target_brush == fill_brush)
+    {
         return;
+    }
 
     std::queue<std::pair<int, int>> pixels;
     pixels.emplace(x, y);
