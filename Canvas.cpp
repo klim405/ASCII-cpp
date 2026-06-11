@@ -114,7 +114,7 @@ namespace plotter {
         const char* const last_line = &canvas_[y2*width_];
 
         for (char* line = first_line; line <= last_line; line += width_) {
-            std::fill(line + x1, line + x2, fill_char);
+            std::fill(line + x1, line + x2 + 1, fill_char);
         }
     }
 
